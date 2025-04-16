@@ -1,13 +1,13 @@
 <script setup>
 import {inject, ref} from "vue";
 import {useTheme} from "vuetify";
-let     data = ref({user:'admin',pass:'satesto'});
+let     data = ref({userName:'admin',passWord:'satesto'});
 const   http = inject("$http");
 function login(){
   event.preventDefault();
   let p = {
-    "userName" : data.value.user,
-    "passWord" : data.value.pass
+    "userName" : data.value.userName,
+    "passWord" : data.value.passWord
   }
   http.post('User/Authenticate',p)
       .then(data=>{
