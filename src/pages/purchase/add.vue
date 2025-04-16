@@ -6,7 +6,7 @@ import List from "@/components/List.vue";
 
 const $http = inject('$http');
 const router = useRouter();
-
+const dlg = true;
 const props = defineProps({
   purchase: Object,
   load: Function
@@ -69,7 +69,7 @@ loadRefs();
 </script>
 
 <template>
-  <v-dialog width="800" :model-value="true">
+  <v-dialog width="800" v-model="dlg">
     <v-card>
       <v-container>
         <v-select

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed ,inject} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
-
+const dlg = true;
 const $http = inject('$http');
 const router = useRouter();
 const route = useRoute();
@@ -28,18 +28,32 @@ const total = computed(() => {
   return form.value.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 });
 function load() {
-  Promise.all([
-    $http.get(`Sales/GetSale/${id}`),
+  const id = route.params.id;
+  const isEdit = id && id !== 'add';
+
+  const requests = [
+    isEdit ? $http.get(`Sales/GetSale/${id}`) : Promise.resolve({ data: {
+        clientId: null,
+        warehouseId: null,
+        items: []
+      }}),
     $http.get('Clients/GetClients'),
     $http.get('Warehouses/GetWarehouses'),
     $http.get('Products/GetProducts')
-  ]).then(([f,c, w, p]) => {
-    form.value = f.data;
+  ];
+
+  Promise.all(requests).then(([f, c, w, p]) => {
+    form.value = f?.data || {
+      clientId: null,
+      warehouseId: null,
+      items: []
+    };
     clients.value = c.data;
     warehouses.value = w.data;
     products.value = p.data;
   });
 }
+
 function productName(id) {
   const product = products.value.find(p => p.id === id);
   return product ? product.name : '';
@@ -75,7 +89,7 @@ load();
 </script>
 
 <template>
-  <v-dialog width="800" :model-value="true">
+  <v-dialog width="800" v-model="dlg">
   <v-card class="pa-4">
     <v-select
         v-model="form.clientId"

@@ -4,7 +4,7 @@ import {useRouter} from 'vue-router';
 
 const $http = inject('$http');
 const router = useRouter();
-
+const dlg = true;
 const props = defineProps({
   warehouse: Object,
   load: Function
@@ -21,7 +21,7 @@ function save() {
 </script>
 
 <template>
-  <v-dialog width="600" :model-value="true">
+  <v-dialog width="800" v-model="dlg">
     <v-card>
       <v-list>
         <v-text-field v-model="pData.name" label="დასახელება" />
