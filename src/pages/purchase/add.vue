@@ -69,7 +69,7 @@ loadRefs();
 </script>
 
 <template>
-  <v-dialog width="800" v-model="dlg">
+  <v-dialog width="800" v-model="dlg" persistent>
     <v-card>
       <v-container>
         <v-select

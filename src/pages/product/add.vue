@@ -27,7 +27,7 @@ function save() {
 </script>
 
 <template>
-  <v-dialog width="800"  class="mx-auto" v-model="dlg">
+  <v-dialog width="800"  class="mx-auto" v-model="dlg" persistent>
     <v-card>
       <v-list>
         <v-select

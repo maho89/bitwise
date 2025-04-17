@@ -21,7 +21,7 @@ function save() {
 </script>
 
 <template>
-  <v-dialog width="800" v-model="dlg">
+  <v-dialog width="800" v-model="dlg" persistent>
     <v-card>
       <v-list>
         <v-text-field v-model="pData.name" label="დასახელება" />

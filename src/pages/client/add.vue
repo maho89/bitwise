@@ -27,7 +27,7 @@ function save() {
 </script>
 
 <template>
-  <v-dialog width="800" v-model="dlg">
+  <v-dialog width="800" v-model="dlg" persistent>
   <v-card class="pa-4">
 
     <v-form @submit.prevent="save">
