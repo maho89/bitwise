@@ -1,11 +1,9 @@
 <script setup>
-import {RouterView} from 'vue-router';
+import page from '@/pages/index.vue'
 </script>
 
 <template>
-  <v-main>
-    <RouterView class="router"  />
-  </v-main>
+  <page/>
 </template>
 
 <style scoped>
