@@ -43,8 +43,6 @@ function initProduct() {
 }
 
 onMounted(async () => {
-  await loadTypes()
-  await load()
   initProduct()
 })
 

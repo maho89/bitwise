@@ -5,21 +5,22 @@ import List from '@/components/List.vue'
 import useTypeService from './service'
 
 const route = useRoute()
-const { items, load, loaded, getById } = useTypeService()
+const { items, load, loaded, getById, displayName } = useTypeService()
 
-const tableData = ref([])
+
 const type = ref({ id: 0, name: '', parentTypeId: null })
+import { computed } from 'vue'
 
-function buildTable() {
-  tableData.value = items.value.map(t => {
-    const parent = items.value.find(p => p.id === t.parentTypeId)
+const tableData = computed(() => {
+  return items.value.map(t => {
     return {
       id: t.id,
       name: t.name,
-      parent: parent?.name || ''
+      parent: displayName(t.parentTypeId) || ''
     }
   })
-}
+})
+
 
 function initType() {
   const id = route.params.id
@@ -32,8 +33,6 @@ function initType() {
 }
 
 onMounted(async () => {
-  await load()
-  buildTable()
   initType()
 })
 

@@ -36,6 +36,6 @@ const useTypeService = () => {
 }
 
 // პირველივე იმპორტისას ავტო-დატვირთვა
-onMounted(() => load())
+
 
 export default useTypeService

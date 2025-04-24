@@ -13,7 +13,6 @@ const tableData = computed(() => {
   }))
 })
 
-onMounted(load)
 </script>
 
 <template>

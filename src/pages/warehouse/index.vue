@@ -41,7 +41,7 @@ function initWarehouse() {
   }
 }
 onMounted(async () => {
-  await load()
+
   initWarehouse()
 })
 

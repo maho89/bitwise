@@ -1,57 +1,60 @@
 <script setup>
-import {inject, ref} from "vue";
-import {useTheme} from "vuetify";
-let     data = ref({userName:'admin',passWord:'satesto'});
-const   http = inject("$http");
-function login(){
-  event.preventDefault();
-  let p = {
-    "userName" : data.value.userName,
-    "passWord" : data.value.passWord
-  }
-  http.post('User/Authenticate',p)
-      .then(data=>{
-        if (data.code === 0){
-          localStorage.setItem('token',data.sessionToken);
-          location.reload();
-        }
-      })
-      .finally(()=>{
-      // location.reload()
-  });
+import { ref } from 'vue'
+import { useTheme } from 'vuetify'
+import useUserService from '@/services/user'
+
+const { login } = useUserService()
+
+const data = ref({
+  userName: '',
+  passWord: ''
+})
+
+function submit(e) {
+  e.preventDefault()
+  login({
+    userName: data.value.userName,
+    passWord: data.value.passWord
+  })
 }
-const theme = useTheme();
+
+const theme = useTheme()
+function toggleTheme() {
+  theme.global.name.value = theme.global.name.value === 'dark' ? 'light' : 'dark'
+}
 </script>
+
 <template>
-    <div class="login_bg">
-      <v-card class="pa-5">
-        <v-btn
+  <div class="login_bg">
+    <v-card class="pa-5">
+      <v-btn
           class="position-absolute right-0 top-0"
           style="z-index: 999"
-          @click="toggleTheme()"
+          @click="toggleTheme"
           :key="theme.global.name"
           variant="text"
           slim
-          :icon="theme.global.name.value=='dark'?'mdi-white-balance-sunny':'mdi-moon-waning-crescent'"/>
-        <v-img  class="ma-10" src="/src/assets/logo.svg" style="height: 150px" />
-        <form @submit="login()" class="login">
-          <v-text-field  v-model="data.userName" label="მომხმარებელი"  />
-          <v-text-field  v-model="data.passWord" label="პაროლი" type="password"  />
-          <v-btn  type="submit" >შესვლა</v-btn>
-        </form>
-      </v-card>
-
-    </div>
+          :icon="theme.global.name.value === 'dark' ? 'mdi-white-balance-sunny' : 'mdi-moon-waning-crescent'"
+      />
+      <v-img class="ma-10" src="/src/assets/logo.svg" style="height: 150px" />
+      <form @submit="submit" class="login">
+        <v-text-field v-model="data.userName" label="მომხმარებელი" />
+        <v-text-field v-model="data.passWord" label="პაროლი" type="password" />
+        <v-btn type="submit">შესვლა</v-btn>
+      </form>
+    </v-card>
+  </div>
 </template>
-<style>
-.login_bg{
+
+<style scoped>
+.login_bg {
   position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.login{
+.login {
   width: 300px;
   display: flex;
   flex-direction: column;

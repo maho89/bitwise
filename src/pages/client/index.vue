@@ -45,7 +45,6 @@ function initClient() {
 }
 
 onMounted(async () => {
-  await load()
   initClient()
 })
 

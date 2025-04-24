@@ -3,14 +3,7 @@ import {useTheme} from "vuetify";
 import {ref} from "vue";
 
 const theme = useTheme();
-const toggleTheme = () => {
-  if(theme.global.name.value=="dark"){
-    theme.global.name.value="light";
-  }else{
-    theme.global.name.value="dark"
-  }
-  return theme.global.name.value;
-};
+
 </script>
 
 <template>
