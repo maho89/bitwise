@@ -1,38 +1,45 @@
 <script setup>
-import { ref, onMounted, inject, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import List from '@/components/List.vue';
+import { ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import List from '@/components/List.vue'
+import useTypeService from './service'
 
-const $http = inject('$http');
-const types = ref([]);
-const type = ref({ id: 0, name: '', parentTypeId: null });
-const loaded = ref(false);
-const route = useRoute();
-const tableData = ref([]);
-function load() {
-  $http.get('ProductTypes/GetProductTypes').then(res => {
-    types.value = res.data;
-    let items = [];
-    for (const type of res.data) {
-      let parent  = '';
-      if(type.parentTypeId) parent = types.value.find((p) => p.id === type.parentTypeId)
-      items.push({
-        id: type.id,
-        name: type.name,
-        parent : parent?.name,
-      })
+const route = useRoute()
+const { items, load, loaded, getById } = useTypeService()
 
+const tableData = ref([])
+const type = ref({ id: 0, name: '', parentTypeId: null })
+
+function buildTable() {
+  tableData.value = items.value.map(t => {
+    const parent = items.value.find(p => p.id === t.parentTypeId)
+    return {
+      id: t.id,
+      name: t.name,
+      parent: parent?.name || ''
     }
-    tableData.value =items;
-    loaded.value = true;
-  });
+  })
 }
 
-onMounted(load);
+function initType() {
+  const id = route.params.id
+  if (id === 'add') {
+    type.value = { id: 0, name: '', parentTypeId: null }
+  } else if (id) {
+    const found = getById(id)
+    if (found) type.value = found
+  }
+}
+
+onMounted(async () => {
+  await load()
+  buildTable()
+  initType()
+})
 
 watch(() => route.params.id, () => {
-  type.value = types.value.find(t => t.id == route.params.id) || { id: 0, name: '', parentTypeId: null};
-});
+  initType()
+})
 </script>
 
 <template>
@@ -43,14 +50,14 @@ watch(() => route.params.id, () => {
           to="/type"
           add="/type/add"
           :fields="{ name: 'დასახელება', parent: 'მშობელი' }"
-          :key="types.length"
+          :key="items.length"
       />
       <RouterView
-          class="router"
-          :types="types"
           :type="type"
+          :types="items"
           :load="load"
           :key="type.id"
+          class="router"
       />
     </template>
   </v-card>

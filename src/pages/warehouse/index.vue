@@ -1,52 +1,53 @@
 <script setup>
-import { inject, onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import List from '@/components/List.vue';
-
-const $http = inject('$http');
+import {computed, onMounted, ref, watch} from 'vue'
+import { useRoute } from 'vue-router'
+import List from '@/components/List.vue'
+import useWarehouseService from './service'
 const route = useRoute();
+const { items, load, loaded,getById } = useWarehouseService()
 
-let warehouses = ref([]);
-let tableData = ref([]);
-let warehouse = ref({
+const tableData = computed(() => {
+  return items.value.map(w => ({
+    id: w.id,
+    name: w.name,
+    location: w.location,
+    rd: w.rd,
+    active: w.active ? '✅' : '❌'
+  }))
+})
+const warehouse = ref({
   id: 0,
   name: '',
   location: '',
   rd: '',
   active: true
 });
-let loaded = ref(false);
 
-// საწყობების ჩატვირთვა
-function load() {
-  return $http.get('Warehouses/GetWarehouses').then(res => {
-    warehouses.value = res.data;
-    tableData.value = res.data.map(w => ({
-      id: w.id,
-      name: w.name,
-      location: w.location,
-      rd: w.rd,
-      active: w.active ? '✅' : '❌'
-    }));
-    initWarehouse();
-    loaded.value = true;
-  });
-}
 
 function initWarehouse() {
-  if (route.params.id) {
-    const w = warehouses.value.find(el => el.id == route.params.id);
-    if (w) warehouse.value = w;
+  const id = route.params.id
+
+  if (id === 'add') {
+    warehouse.value = {
+      id: 0,
+      name: '',
+      location: '',
+      rd: '',
+      active: true
+    }
+  } else if (id) {
+    const w = getById(id)
+    if (w) warehouse.value = w
   }
 }
-
-onMounted(() => {
-  load();
-});
+onMounted(async () => {
+  await load()
+  initWarehouse()
+})
 
 watch(() => route.params.id, () => {
-  initWarehouse();
-});
+  initWarehouse()
+})
 </script>
 
 <template>
@@ -57,11 +58,11 @@ watch(() => route.params.id, () => {
           to="/warehouse"
           add="/warehouse/add"
           :fields="{
-          name: 'დასახელება',
-          location: 'მდებარეობა',
-          rd: 'რ/დ ნომერი',
-          active: 'სტატუსი'
-        }"
+            name: 'დასახელება',
+            location: 'მდებარეობა',
+            rd: 'რ/დ ნომერი',
+            active: 'სტატუსი'
+          }"
           :key="tableData.length"
       />
       <RouterView

@@ -1,22 +1,26 @@
 <script setup>
-import {inject, ref} from 'vue';
-import {useRouter} from 'vue-router';
+import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import useWarehouseService from './service'
 
-const $http = inject('$http');
-const router = useRouter();
-const dlg = true;
+const router = useRouter()
+const { save } = useWarehouseService()
+
 const props = defineProps({
-  warehouse: Object,
-  load: Function
-});
+  warehouse: Object
+})
 
-let pData = ref({ ...props.warehouse });
+const dlg = ref(true)
+const pData = ref({ ...props.warehouse })
 
-function save() {
-  $http.post('Warehouses/SaveWarehouse', pData.value).then(() => {
-    props.load();
-    router.push('/warehouses');
-  });
+watch(() => props.warehouse, (val) => {
+  pData.value = { ...val }
+})
+
+function submit() {
+  save(pData.value).then(() => {
+    router.push('/warehouse')
+  })
 }
 </script>
 
@@ -30,7 +34,7 @@ function save() {
         <v-checkbox v-model="pData.active" label="აქტიური?" />
       </v-list>
       <template v-slot:actions>
-        <v-btn @click="save">შენახვა</v-btn>
+        <v-btn @click="submit">შენახვა</v-btn>
         <v-btn to="/warehouse">დახურვა</v-btn>
       </template>
     </v-card>

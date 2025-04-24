@@ -1,38 +1,19 @@
 <script setup>
-import { ref, onMounted, inject } from 'vue';
-import List from '@/components/List.vue';
+import { onMounted, computed } from 'vue'
+import List from '@/components/List.vue'
+import useStockService from './service'
 
-const $http = inject('$http');
+const { items, loaded, load, getProductName, getWarehouseName } = useStockService()
 
-const stocks = ref([]);
-const tableData = ref([]);
-const loaded = ref(false);
+const tableData = computed(() => {
+  return items.value.map(s => ({
+    product: getProductName(s.productId),
+    warehouse: getWarehouseName(s.warehouseId),
+    quantity: s.quantity
+  }))
+})
 
-function load() {
-  Promise.all([
-    $http.get('Stock/GetStock'),
-    $http.get('Products/GetProducts'),
-    $http.get('Warehouses/GetWarehouses')
-  ]).then(([stockRes, productRes, warehouseRes]) => {
-    const products = productRes.data;
-    const warehouses = warehouseRes.data;
-    stocks.value = stockRes.data;
-
-    tableData.value = stocks.value.map(s => {
-      const product = products.find(p => p.id === s.productId);
-      const warehouse = warehouses.find(w => w.id === s.warehouseId);
-      return {
-        product: product?.name || `#${s.productId}`,
-        warehouse: warehouse?.name || `#${s.warehouseId}`,
-        quantity: s.quantity
-      };
-    });
-
-    loaded.value = true;
-  });
-}
-
-onMounted(load);
+onMounted(load)
 </script>
 
 <template>

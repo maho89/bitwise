@@ -1,73 +1,75 @@
 <script setup>
-import { inject, onMounted, ref, watch, computed } from 'vue';
-import { RouterView, useRoute } from 'vue-router';
-import List from '@/components/List.vue';
+import { ref, onMounted, watch, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import List from '@/components/List.vue'
+import useProductService from './service'
+import useTypeService from '../type/service'
 
-const $http = inject('$http');
-const route = useRoute();
-let products = ref([]);
-let product = ref({
+const route = useRoute()
+const { items, load, loaded, getById } = useProductService()
+const { items: types, load: loadTypes } = useTypeService()
+
+const product = ref({
   id: 0,
   name: '',
   description: '',
   productTypeId: 1,
   barcode: ''
-});
-let loaded = ref(false);
-let types = ref([]);
-// ტიპების ჩატვირთვა
-function typesLoad() {
-  $http.get('ProductTypes/GetProductTypes').then(res => {
-    types.value = res.data;
-    load();
-  });
-};
-// პროდუქტის ინიციალიზაცია ID-ის მიხედვით
+})
+
+const tableData = computed(() => {
+  return items.value.map(p => ({
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    barcode: p.barcode
+  }))
+})
+
 function initProduct() {
-  if (route.params.id) {
-    let p = products.value.find(element => element.id == route.params.id);
-    if (p) product.value = p;
+  const id = route.params.id
+  if (id === 'add') {
+    product.value = {
+      id: 0,
+      name: '',
+      description: '',
+      productTypeId: 1,
+      barcode: ''
+    }
+  } else if (id) {
+    const p = getById(id)
+    if (p) product.value = p
   }
 }
-// პროდუქტების ჩატვირთვა
-function load() {
-  return $http.get('Products/GetProducts').then(res => {
-    products.value = res.data;
-    initProduct();
-    loaded.value = true;
-  });
-}
-// ჩატვირთვა mount-ზე
-onMounted(() => {
-  typesLoad();
-});
 
-// როცა ID იცვლება
+onMounted(async () => {
+  await loadTypes()
+  await load()
+  initProduct()
+})
+
 watch(() => route.params.id, () => {
-  initProduct();
-});
+  initProduct()
+})
 </script>
 
 <template>
   <v-card>
     <template v-if="loaded">
       <List
-          :items="products"
+          :items="tableData"
           to="/product"
           add="/product/add"
           :fields="{ name: 'დასახელება', description: 'აღწერა', barcode: 'ბარკოდი' }"
-          :key="products.length"
+          :key="items.length"
       />
       <RouterView
-          class="router"
           :product="product"
-          :load="load"
           :types="types"
+          :load="load"
           :key="product.id"
+          class="router"
       />
     </template>
   </v-card>
 </template>
-
-<style scoped>
-</style>

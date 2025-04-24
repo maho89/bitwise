@@ -1,27 +1,27 @@
 <script setup>
-import {inject, ref} from 'vue';
-import {useRouter} from 'vue-router';
-const $http = inject('$http');
-const router = useRouter();
-const dlg = true;
+import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import useTypeService from './service'
+
+const router = useRouter()
+const { save } = useTypeService()
+
 const props = defineProps({
-  types:{
-    type:Array,
-  },
-  type: {
-    type: Object,
-    required: true
-  },
-  load: Function
-});
+  type: Object,
+  types: Array
+})
 
-let pData = ref({...props.type});
+const dlg = ref(true)
+const pData = ref({ ...props.type })
 
-function save() {
-  $http.post('ProductTypes/SaveProductType', pData.value).then(() => {
-    props.load();
-    router.push('/type');
-  });
+watch(() => props.type, (val) => {
+  pData.value = { ...val }
+})
+
+function submit() {
+  save(pData.value).then(() => {
+    router.push('/type')
+  })
 }
 </script>
 
@@ -39,7 +39,7 @@ function save() {
         />
       </v-list>
       <template v-slot:actions>
-        <v-btn @click="save">შენახვა</v-btn>
+        <v-btn @click="submit">შენახვა</v-btn>
         <v-btn to="/type">დახურვა</v-btn>
       </template>
     </v-card>

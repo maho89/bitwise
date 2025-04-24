@@ -1,46 +1,51 @@
 <script setup>
-import { ref, onMounted, watch, inject } from 'vue';
-import { useRoute } from 'vue-router';
-import List from '@/components/List.vue';
+import {ref, onMounted, watch, inject} from 'vue'
+import { useRoute } from 'vue-router'
+import List from '@/components/List.vue'
+import useWarehouseService from '../warehouse/service'
 
-const $http = inject('$http');
-const purchases = ref([]);
-const tableData = ref([]);
-const purchase = ref({ id: 0, warehouseId: 0 });
-const loaded = ref(false);
-const route = useRoute();
+const $http = inject('$http')
+const route = useRoute()
+
+const { items: warehouses, load: loadWarehouses } = useWarehouseService()
+
+const purchases = ref([])
+const tableData = ref([])
+const purchase = ref({ id: 0, warehouseId: 0 })
+const loaded = ref(false)
+
+function getWarehouseName(id) {
+  const w = warehouses.value.find(w => w.id === id)
+  return w?.name || 'უცნობია'
+}
 
 function load() {
   Promise.all([
     $http.get('Purchases/GetPurchases'),
-    $http.get('Warehouses/GetWarehouses')
-  ]).then(([purchaseRes, warehouseRes]) => {
-    purchases.value = purchaseRes.data;
-    const warehouses = warehouseRes.data;
+    loadWarehouses()
+  ]).then(([purchaseRes]) => {
+    purchases.value = purchaseRes.data
 
-    tableData.value = purchases.value.map(p => {
-      const warehouse = warehouses.find(w => w.id === p.warehouseId);
-      return {
-        id: p.id,
-        date: p.rd,
-        warehouseName: warehouse ? warehouse.name : 'უცნობია'
-      };
-    });
+    tableData.value = purchases.value.map(p => ({
+      id: p.id,
+      date: p.rd,
+      warehouseName: getWarehouseName(p.warehouseId)
+    }))
 
-    if (route.params.id) {
-      purchase.value = purchases.value.find(p => p.id == route.params.id) || { id: 0, warehouseId: 0 };
+    const paramId = route.params.id
+    if (paramId) {
+      purchase.value = purchases.value.find(p => p.id == paramId) || { id: 0, warehouseId: 0 }
     }
 
-    loaded.value = true;
-  });
+    loaded.value = true
+  })
 }
 
-
-onMounted(load);
+onMounted(load)
 
 watch(() => route.params.id, (newVal) => {
-  purchase.value = purchases.value.find(p => p.id == newVal) || { id: 0, warehouseId: 0 };
-});
+  purchase.value = purchases.value.find(p => p.id == newVal) || { id: 0, warehouseId: 0 }
+})
 </script>
 
 <template>
@@ -50,10 +55,7 @@ watch(() => route.params.id, (newVal) => {
           :items="tableData"
           to="/purchase"
           add="/purchase/add"
-          :fields="{
-    date: 'თარიღი',
-    warehouseName: 'საწყობი'
-  }"
+          :fields="{ date: 'თარიღი', warehouseName: 'საწყობი' }"
           :key="tableData.length"
       />
       <RouterView
