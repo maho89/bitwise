@@ -1,34 +1,42 @@
 class Http {
   constructor() {
     this.baseURL = "http://apiserv.bitwise.ge/api/";
-    this.defaultHeaders = new Headers({
-      "Content-Type": "application/json"
-    });
+  }
 
+  getHeaders(isFormData = false) {
+    const headers = new Headers();
     const token = localStorage.getItem("token");
+
     if (token) {
-      this.defaultHeaders.set("sessionToken", `${token}`);
+      headers.set("sessionToken", token);
     }
+
+    if (!isFormData) {
+      headers.set("Content-Type", "application/json");
+    }
+
+    return headers;
   }
 
   async get(endpoint) {
     return this.request(endpoint, "GET");
   }
 
-  async post(endpoint, data = {}) {
-    return this.request(endpoint, "POST", data);
+  async post(endpoint, data = {}, isFormData = false) {
+    return this.request(endpoint, "POST", data, isFormData);
   }
 
-  async request(endpoint, method = "GET", data = null) {
+  async request(endpoint, method = "GET", data = null, isFormData = false) {
     const url = this.baseURL + endpoint;
+    const headers = this.getHeaders(isFormData);
 
     const options = {
       method,
-      headers: this.defaultHeaders,
+      headers,
     };
 
     if (data && method !== "GET") {
-      options.body = JSON.stringify(data);
+      options.body = isFormData ? data : JSON.stringify(data);
     }
 
     try {
@@ -39,13 +47,19 @@ class Http {
         throw new Error(message);
       }
 
-      return await response.json();
+      const contentType = response.headers.get("Content-Type");
+      if (contentType && contentType.includes("application/json")) {
+        return await response.json();
+      }
+
+      return await response.text();
     } catch (error) {
       console.error("Request failed:", error.message);
       throw new Error(`HTTP request failed: ${error.message}`);
     }
   }
 }
+
 
 // Vue Plugin
 export default {
