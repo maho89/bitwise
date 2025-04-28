@@ -1,12 +1,14 @@
 <script setup>
 const pages = [
-  { path: '/sale', icon: 'mdi-cash-register', title: 'სალარო' },
+  { path: '/sale/add', icon: 'mdi-cash-register', title: 'სალარო' },
+  { path: '/sale', icon: 'mdi-cart-arrow-up', title: 'გაყიდვები' },
   { path: '/product', icon: 'mdi-package-variant', title: 'პროდუქტები' },
   { path: '/type', icon: 'mdi-shape-outline', title: 'კატეგორიები' },
   { path: '/warehouse', icon: 'mdi-warehouse', title: 'საწყობები' },
   { path: '/purchase', icon: 'mdi-cart-arrow-down', title: 'შესყიდვები' },
   { path: '/stock', icon: 'mdi-clipboard-list-outline', title: 'სტოკი' },
-  { path: '/client', icon: 'mdi-account-group', title: 'კლიენტები' }
+  { path: '/client', icon: 'mdi-account-group', title: 'კლიენტები' },
+
 ];
 
 </script>

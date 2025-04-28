@@ -21,6 +21,7 @@ import client_add from '@/pages/client/add.vue'
 
 import sale from '@/pages/sale/index.vue'
 import sale_add from '@/pages/sale/add.vue'
+import sale_view from '@/pages/sale/view.vue'
 
 const routes = [
     { path: '/', name: 'home', redirect: '/product' },
@@ -74,13 +75,20 @@ const routes = [
         ]
     },
     {
+        path: '/sale/add',
+        name: 'sale_add',
+        component: sale_add,
+    },
+    {
         path: '/sale',
         name: 'sale',
         component: sale,
         children: [
-            { path: ':id', name: 'sale-edit', component: sale_add }
+            { path: ':id', name: 'sale_view', component: sale_view }
         ]
-    }
+    },
+
+
 ]
 
 const router = createRouter({
