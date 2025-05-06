@@ -1,17 +1,23 @@
 <script setup>
 import {ref, onMounted, inject, computed} from 'vue';
-
+import useClientService from "@/pages/client/service.js";
+import useWarehouseService from "@/pages/warehouse/service.js";
+import useProductService from "@/pages/product/service.js";
 const $http = inject('$http');
-
-const clients = ref([]);
-const warehouses = ref([]);
-const products = ref([]);
 const stocks = ref([]);
 const clientId = ref(1);
 
 const loaded = ref(false);
 const search = ref('');
+const searchFocus=ref(false);
 const selectedWarehouse = ref(localStorage.getItem('selectedWarehouse')*1 || null);
+const clientService = useClientService();
+const warehouseService = useWarehouseService();
+const productService = useProductService();
+const clients = clientService.items;
+const warehouses = warehouseService.items;
+const products = productService.items;
+
 const cart = ref([]);
 const paymentMethod = ref('cash');
 const showWarehouseDialog = ref(!selectedWarehouse.value);
@@ -26,14 +32,8 @@ function confirmWarehouse() {
 
 function load() {
   Promise.all([
-    $http.get('Clients/GetClients'),
-    $http.get('Warehouses/GetWarehouses'),
-    $http.get('Products/GetProducts'),
     $http.get('Stock/GetStock')
-  ]).then(([clientsRes, warehousesRes, productsRes, stocksRes]) => {
-    clients.value = clientsRes.data;
-    warehouses.value = warehousesRes.data;
-    products.value = productsRes.data;
+  ]).then(([stocksRes]) => {
     stocks.value = stocksRes.data;
     loaded.value = true;
   });
@@ -47,8 +47,7 @@ function getProductName(productId) {
 function getProductImage(productId) {
   const product = products.value.find(p => p.id === productId);
   return product && product.imagePaths && product.imagePaths.length
-      ? 'http://app.bitwise.ge/' + product.imagePaths[0].path
-      : '/no-image.png';
+      ? 'http://app.bitwise.ge/' + product.imagePaths[0].path: '/no-image.png';
 }
 
 const filteredProducts = computed(() =>
@@ -57,11 +56,14 @@ const filteredProducts = computed(() =>
             (!selectedWarehouse.value || stock.warehouseId === selectedWarehouse.value) &&
             getProductName(stock.productId).toLowerCase().includes(search.value.toLowerCase())
         )
-        .map(stock => ({
+        .map(stock => {
+          const product = productService.getById(stock.productId);
+            return {
           ...stock,
-          name: getProductName(stock.productId),
-          image: getProductImage(stock.productId)
-        }))
+          name: product.name,
+          image: product.imagePaths.length ? 'http://app.bitwise.ge/' + product.imagePaths[0].path: '/no-image.png',
+          barcode: product.barcode
+        }})
 );
 
 const totalPrice = computed(() =>
@@ -75,6 +77,8 @@ function addToCart(product) {
   } else {
     cart.value.push({ ...product, quantity: 1 });
   }
+  searchFocus.value=false;
+  search.value='';
 }
 
 function increaseQty(item) {
@@ -236,60 +240,53 @@ onMounted(load);
       </v-card-actions>
     </v-card>
   </v-dialog>
-  <v-card v-if="loaded" class="pa-4">
-    <v-row>
+    <v-card v-if="loaded" class="pa-4">
+    <v-toolbar flat>
+      <v-text-field
+          v-model="search"
+          density="compact"
+          placeholder="პროდუქტის ძებნა ან ბარკოდი"
+          prepend-inner-icon="mdi-magnify"
+          variant="solo"
+          class="pa-3"
+          hide-details
+          single-line
+          @keydown.enter="handleSearchOrBarcode"
+          clearable
+      />
+      <v-btn icon="mdi-cog" @click="showWarehouseDialog = true" />
+    </v-toolbar>
 
-      <!-- მარცხენა ნაწილი: საწყობი + ძებნა + პროდუქტები -->
-      <v-col cols="6">
-        <v-toolbar>
-          <v-text-field
-              v-model="search"
-              density="compact"
-              placeholder="Search"
-              prepend-inner-icon="mdi-magnify"
-              variant="solo"
-              width="200"
-              flat
-              hide-details
-              single-line
-              @keydown.enter="handleSearchOrBarcode"
-              clearable
-          />
-          <v-btn icon="mdi mdi-cog"   @click="showWarehouseDialog=true" />
-        </v-toolbar>
-
-
-
+    <v-card-text>
+      <template v-if="search">
         <v-container class="d-flex flex-wrap">
-          <div
-              v-for="product in filteredProducts"
-              :key="product.id"
-              class="pa-2"
-          >
-            <v-card @click="addToCart(product)" class="text-center hoverable">
-              <img :src="product.image" height="100" />
+          <div v-for="product in filteredProducts" :key="product.productId" class="pa-2">
+            <v-card @click="addToCart(product)" class="text-center hoverable" style="width: 150px;">
+              <v-img :src="product.image" height="100" />
               <v-card-title class="text-subtitle-2">{{ product.name }}</v-card-title>
               <v-card-subtitle>{{ product.price }} ₾</v-card-subtitle>
             </v-card>
           </div>
         </v-container>
-      </v-col>
+      </template>
 
-      <!-- მარჯვენა ნაწილი: კალათა -->
-      <v-col cols="6">
+      <template v-else>
+        <!-- კალათა და გადახდა -->
         <v-table dense>
           <thead>
           <tr>
+            <th class="w-20px"></th>
             <th>პროდუქტი</th>
             <th>რაოდ.</th>
             <th>ფასი</th>
             <th>ჯამი</th>
-            <th></th>
+            <th class="w-20px"></th>
           </tr>
           </thead>
           <tbody>
           <tr v-for="item in cart" :key="item.productId">
-            <td>{{ item.name }}</td>
+            <td><v-avatar :image="item.image" /></td>
+            <td><v-list-item :title="item.name" :subtitle="item.barcode" /></td>
             <td>
               <v-btn icon @click="decreaseQty(item)">
                 <v-icon>mdi-minus</v-icon>
@@ -309,18 +306,31 @@ onMounted(load);
           </tr>
           </tbody>
         </v-table>
-
         <v-card class="mt-4 pa-4">
           <div class="text-h6 mb-2">სულ გადასახდელი: {{ totalPrice.toFixed(2) }} ₾</div>
-          <v-select v-model="clientId" label="კლიენტი" density="comfortable" variant="outlined" :items="clients" item-title="name"  item-value="id"/>
+          <v-select
+              v-model="clientId"
+              label="კლიენტი"
+              density="comfortable"
+              variant="outlined"
+              :items="clients"
+              item-title="name"
+              item-value="id"
+          />
           <v-card-actions class="d-flex">
             <v-btn color="primary" @click="pay">გადახდა</v-btn>
             <v-btn @click="printReceipt">ბეჭდვა</v-btn>
             <v-btn color="grey" @click="clearCart">გაუქმება</v-btn>
           </v-card-actions>
         </v-card>
-      </v-col>
-
-    </v-row>
+      </template>
+    </v-card-text>
   </v-card>
+
 </template>
+
+<style>
+.w-20px{
+  width: 20px!important;
+}
+</style>
