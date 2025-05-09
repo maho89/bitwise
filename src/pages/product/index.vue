@@ -22,6 +22,7 @@ const tableData = computed(() => {
     id: p.id,
     name: p.name,
     description: p.description,
+    icon: 'http://app.bitwise.ge/'+p.imagePaths[0]?.path,
     barcode: p.barcode
   }))
 })
@@ -58,7 +59,7 @@ watch(() => route.params.id, () => {
           :items="tableData"
           to="/product"
           add="/product/add"
-          :fields="{ name: 'დასახელება', description: 'აღწერა', barcode: 'ბარკოდი' }"
+          :fields="{icon:{value:'ფოტო', type:'img'}, name: 'დასახელება', description: 'აღწერა', barcode: 'ბარკოდი' }"
           :key="items.length"
       />
       <RouterView

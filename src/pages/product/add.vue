@@ -1,24 +1,33 @@
 <script setup>
 import {inject, ref, watch} from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import useProductService from './service'
 import ImgBox from "@/components/imgBox.vue";
 const $http = inject('$http')
 const router = useRouter()
+const route = useRoute()
 const { save } = useProductService()
 
 const props = defineProps({
   product: Object,
   types: Array
 })
-const images = $http.get()
+const id =  route.params.id;
+let images = ref([]);
+function loadImages() {
+  $http.get(`Products/GetProductImages?productId=${id}`).then((res) => {
+    images.value = res.data;
+  })
+}
+
 const dlg = ref(true)
 const pData = ref({ ...props.product })
 
 watch(() => props.product, (val) => {
   pData.value = { ...val }
+  l
 })
-
+loadImages();
 function submit() {
   save(pData.value).then(() => {
     router.push('/product')
@@ -40,7 +49,7 @@ function submit() {
         <v-text-field v-model="pData.name" label="დასახელება" required />
         <v-text-field v-model="pData.barcode" label="ბარკოდი" required />
         <v-text-field v-model="pData.description" label="აღწერა" required />
-        <img-box :id="pData.id" :images="pData.imagePaths" />
+        <img-box :id="pData.id" :images="images" />
       </v-list>
       <template v-slot:actions>
         <v-btn @click="submit">შენახვა</v-btn>

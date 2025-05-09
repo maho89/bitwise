@@ -27,8 +27,8 @@ function init() {
 
   let f = props.fields || (props.items.length ? Object.keys(props.items[0]) : []);
   params.value.fields = Array.isArray(f)
-      ? f.map(e => typeof e === 'string' ? { key: e, value: e } : { key: e.key, value: e.value || e.key })
-      : Object.entries(f).map(([k, v]) => ({ key: k, value: v || k }));
+      ? f.map(e => typeof e === 'string' ? { key: e, value: e } : { key: e.key, value: e.value || e.key, type:e.type || 'text' })
+      : Object.entries(f).map(([k, v]) => ({ key: k, value: v.value || v || k, type:v.type || 'text' }));
 }
 
 init();
@@ -85,10 +85,10 @@ function startResize(colKey, event) {
               class="column-header flex-1-1 ma-2"
               v-for="col in params.fields"
               :key="col.key"
-              :style="{ width: (columnWidths[col.key] || 150) + 'px' }"
+              :style="col.type=='img'?{maxWidth:'50px'}:{ width: (columnWidths[col.key] || 150) + 'px' }"
           >
             {{ col.value }}
-            <span class="resizer" @mousedown="startResize(col.key, $event)"></span>
+            <span class="resizer" v-if="col.type!='img'" @mousedown="startResize(col.key, $event)"></span>
           </div>
         </div>
         <template v-slot:append v-if="params.delete">
@@ -109,9 +109,13 @@ function startResize(colKey, event) {
               v-for="col in params.fields"
               :key="col.key"
               class="text-left row-cell flex-1-1 ma-2"
-              :style="{ width: (columnWidths[col.key] || 150) + 'px' }"
+              :style="col.type=='img'?{maxWidth:'50px'}:{ width: (columnWidths[col.key] || 150) + 'px' }"
           >
-            {{ item[col.key] }}
+            <template v-if="col.type=='img'">
+              <v-avatar style="position: absolute; margin: -6px;" :image="item[col.key]"></v-avatar>
+            </template>
+            <template v-else> {{ item[col.key] }}</template>
+
           </div>
         </div>
         <template v-slot:append v-if="params.delete">

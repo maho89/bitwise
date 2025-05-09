@@ -20,6 +20,7 @@ const useProductService = () => {
         return p?.name || `#${id}`
     }
 
+
     const save = async (data) => {
         await $http.post('Products/SaveProduct', data)
         await load()

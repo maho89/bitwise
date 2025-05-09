@@ -47,6 +47,7 @@ function initSale() {
             ss.items = res.data?.items?.map(item => ({
               product: productService.displayName(item.productId) ,
               unitPrice: item.unitPrice?.toFixed(2),
+
               total: item.total?.toFixed(2),
             })) || []
             sale.value ={...ss};
