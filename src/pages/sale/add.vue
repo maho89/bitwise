@@ -6,7 +6,7 @@ import useProductService from "@/pages/product/service.js";
 import useSaleService from "@/pages/sale/service.js";
 const $http = inject('$http');
 const stocks = ref([]);
-const clientId = ref(1);
+const clientId = ref(0);
 
 const loaded = ref(false);
 const search = ref('');
@@ -69,6 +69,7 @@ const filteredProducts = computed(() =>
               product.barcode?.toLowerCase().includes(searchText)
           );
         })
+        .slice(0, 20)
         .map(stock => {
           const product = productService.getById(stock.productId);
           return {
@@ -280,7 +281,7 @@ onMounted(load);
       </v-card-actions>
     </v-card>
   </v-dialog>
-  <v-dialog v-model="showEndDialog" persistent max-width="400">
+  <v-dialog v-model="showEndDialog" persistent max-width="600">
     <v-card class="mt-4 pa-4">
 
       <v-text-field
@@ -340,7 +341,8 @@ onMounted(load);
       <v-card-actions class="d-flex justify-space-between">
         <v-btn color="primary" @click="end">დასრულება</v-btn>
         <v-btn @click="printReceipt">ბეჭდვა</v-btn>
-        <v-btn color="grey" @click="clearCart">გაუქმება</v-btn>
+        <v-btn color="grey" @click="clearCart">გასუფთავება</v-btn>
+        <v-btn color="grey" @click="showEndDialog=false">დახურვა</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -362,13 +364,14 @@ onMounted(load);
       <v-btn icon="mdi-cog" @click="showWarehouseDialog = true" />
     </v-toolbar>
 
-    <v-card-text>
+    <v-card-item >
       <template v-if="search">
-        <div class="d-flex flex-wrap ">
-          <div v-for="product in filteredProducts" :key="product.productId" class="pa-2">
-            <v-card @click="addToCart(product)" class="text-center hoverable" style="width: 150px;">
-              <v-img :src="product.image" height="100" />
+        <div class="d-flex flex-wrap " style="    overflow: auto;    height: 808px;">
+          <div v-for="product in filteredProducts" :key="product.productId" class="pa-2 card">
+            <v-card @click="addToCart(product)" class="text-center hoverable">
+              <v-img :src="product.image" height="200" />
               <v-card-title class="text-subtitle-2">{{ product.name }}</v-card-title>
+              <v-card-title class="text-subtitle-2">{{ product.barcode }}</v-card-title>
               <v-card-subtitle>{{ product.price }} ₾</v-card-subtitle>
             </v-card>
           </div>
@@ -416,7 +419,7 @@ onMounted(load);
             <v-btn :disabled="cart.length<1" @click="showEndDialog=true">დასრულება</v-btn>
           </div>
         </template>
-    </v-card-text>
+    </v-card-item>
   </v-card>
 
 </template>
@@ -425,7 +428,10 @@ onMounted(load);
 .w-20px{
   width: 20px!important;
 }
+.card{
+  flex: 1 1 300px;
 
+}
 .cart-container {
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 4px;

@@ -1,6 +1,10 @@
 class Http {
   constructor() {
-    this.baseURL = "http://apiserv.bitwise.ge/api/";
+    let url = 'http://apitest.bitwise.ge/api/';
+    if(location.host === 'app.bitwise.ge') {
+      url = 'http://apiserv.bitwise.ge/api/';
+    }
+    this.baseURL = url
   }
 
   getHeaders(isFormData = false) {

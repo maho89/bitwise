@@ -42,7 +42,7 @@ watch(() => route.params.id, () => {
 </script>
 
 <template>
-  <v-card>
+
     <template v-if="loaded">
       <List
           :items="tableData"
@@ -59,5 +59,5 @@ watch(() => route.params.id, () => {
           class="router"
       />
     </template>
-  </v-card>
+
 </template>

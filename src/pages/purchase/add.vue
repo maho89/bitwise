@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import List from '@/components/List.vue'
 import useProductService from '../product/service'
 import useWarehouseService from '../warehouse/service'
+import useClientService from "@/pages/client/service.js";
 
 const $http = inject('$http') // ← შენი გლობალური http client
 const router = useRouter()
@@ -13,8 +14,9 @@ const props = defineProps({
   load: Function
 })
 
-const { items: products, load: loadProducts } = useProductService()
-const { items: warehouses, load: loadWarehouses } = useWarehouseService()
+const { items: products } = useProductService()
+const { items: warehouses } = useWarehouseService()
+const {items:clients}= useClientService()
 
 const dlg = ref(true)
 const pData = ref({ ...props.purchase })
@@ -46,9 +48,7 @@ function loadItems() {
 }
 
 function loadRefs() {
-  loadProducts()
-  loadWarehouses()
-  loadItems()
+    loadItems()
 }
 
 function save() {
@@ -80,12 +80,20 @@ loadRefs()
     <v-card>
       <v-container>
         <v-select
+            v-model="pData.clientId"
+            :items="clients"
+            item-title="name"
+            item-value="id"
+            label="ვისგან"
+        />
+        <v-select
             v-model="pData.warehouseId"
             :items="warehouses"
             item-title="name"
             item-value="id"
             label="საწყობი"
         />
+
         <div class="d-flex flex-row ma-2">
           <div class="flex-fill">
             <v-select variant="outlined" v-model="new_item.productId" :items="products" item-title="name" item-value="id" density="compact" hide-details />
@@ -101,7 +109,7 @@ loadRefs()
           </div>
         </div>
 
-        <List
+        <List style="max-height: 500px"
             :items="tableData"
             :fields="{ product: 'პროდუქტი', quantity: 'რაოდენობა', unitPrice: 'ფასი' }"
             :delete="removeItem"

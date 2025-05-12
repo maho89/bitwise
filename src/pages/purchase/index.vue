@@ -4,21 +4,19 @@ import { useRoute } from 'vue-router'
 import List from '@/components/List.vue'
 import useWarehouseService from '../warehouse/service'
 
+import { useDate } from 'vuetify'
+import useClientService from "@/pages/client/service.js";
+
 const $http = inject('$http')
 const route = useRoute()
-
-const { items: warehouses, load: loadWarehouses } = useWarehouseService()
+const {displayName:clientName} = useClientService()
+const { items: warehouses, load: loadWarehouses, displayName:wrName } = useWarehouseService()
 
 const purchases = ref([])
 const tableData = ref([])
 const purchase = ref({ id: 0, warehouseId: 0 })
 const loaded = ref(false)
-
-function getWarehouseName(id) {
-  const w = warehouses.value.find(w => w.id === id)
-  return w?.name || 'უცნობია'
-}
-
+const date = useDate();
 function load() {
   Promise.all([
     $http.get('Purchases/GetPurchases'),
@@ -28,8 +26,9 @@ function load() {
 
     tableData.value = purchases.value.map(p => ({
       id: p.id,
-      date: p.rd,
-      warehouseName: getWarehouseName(p.warehouseId)
+      client:clientName(p.clientId),
+      date: date.format(new Date(p.rd), 'keyboardDateTime24h'),
+      warehouseName: wrName(p.warehouseId)
     }))
 
     const paramId = route.params.id
@@ -49,13 +48,13 @@ watch(() => route.params.id, (newVal) => {
 </script>
 
 <template>
-  <v-card>
+
     <template v-if="loaded">
       <List
           :items="tableData"
           to="/purchase"
           add="/purchase/add"
-          :fields="{ date: 'თარიღი', warehouseName: 'საწყობი' }"
+          :fields="{ date: 'თარიღი',client: 'კომპანია', warehouseName: 'საწყობი' }"
           :key="tableData.length"
       />
       <RouterView
@@ -65,5 +64,5 @@ watch(() => route.params.id, (newVal) => {
           class="router"
       />
     </template>
-  </v-card>
+
 </template>

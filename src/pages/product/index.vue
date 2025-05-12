@@ -53,13 +53,13 @@ watch(() => route.params.id, () => {
 </script>
 
 <template>
-  <v-card>
+
     <template v-if="loaded">
       <List
           :items="tableData"
           to="/product"
           add="/product/add"
-          :fields="{icon:{value:'ფოტო', type:'img'}, name: 'დასახელება', description: 'აღწერა', barcode: 'ბარკოდი' }"
+          :fields="{icon:{value:'ფოტო', type:'img'}, name: 'დასახელება', barcode: 'ბარკოდი' , description: 'აღწერა'}"
           :key="items.length"
       />
       <RouterView
@@ -70,5 +70,4 @@ watch(() => route.params.id, () => {
           class="router"
       />
     </template>
-  </v-card>
 </template>

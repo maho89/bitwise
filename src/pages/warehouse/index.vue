@@ -51,7 +51,7 @@ watch(() => route.params.id, () => {
 </script>
 
 <template>
-  <v-card>
+
     <template v-if="loaded">
       <List
           :items="tableData"
@@ -60,7 +60,7 @@ watch(() => route.params.id, () => {
           :fields="{
             name: 'დასახელება',
             location: 'მდებარეობა',
-            rd: 'რ/დ ნომერი',
+     //       rd: 'რ/დ ნომერი',
             active: 'სტატუსი'
           }"
           :key="tableData.length"
@@ -72,5 +72,5 @@ watch(() => route.params.id, () => {
           class="router"
       />
     </template>
-  </v-card>
+
 </template>

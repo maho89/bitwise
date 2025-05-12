@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import {ref, computed, watch, onMounted, nextTick} from "vue";
 
 const props = defineProps({
   items: {
@@ -15,11 +15,8 @@ const props = defineProps({
     type: String
   }
 });
-
-const search = ref('');
 let params = ref({});
 const columnWidths = ref({});
-
 function init() {
   if (props.add) params.value.add = props.add;
   if (props.delete) params.value.delete = props.delete;
@@ -30,18 +27,7 @@ function init() {
       ? f.map(e => typeof e === 'string' ? { key: e, value: e } : { key: e.key, value: e.value || e.key, type:e.type || 'text' })
       : Object.entries(f).map(([k, v]) => ({ key: k, value: v.value || v || k, type:v.type || 'text' }));
 }
-
 init();
-
-const filteredItems = computed(() => {
-  if (!search.value) return props.items;
-  return props.items.filter(item =>
-      Object.values(item).some(val =>
-          String(val).toLowerCase().includes(search.value.toLowerCase())
-      )
-  );
-});
-
 function startResize(colKey, event) {
   const startX = event.clientX;
   const startWidth = columnWidths.value[colKey] || 150;
@@ -58,16 +44,58 @@ function startResize(colKey, event) {
 
   window.addEventListener('mousemove', onMouseMove);
   window.addEventListener('mouseup', onMouseUp);
-}
+};
+const filter = {
+  search: ref(''),
+  filteredItems: computed(() => {
+    if (!filter.search.value) return props.items;
+    return props.items.filter(item =>
+        Object.values(item).some(val =>
+            String(val).toLowerCase().includes(filter.search.value.toLowerCase())
+        )
+    );
+  }),
+};
+const pagination = {
+  itemsPerPage: ref(10),
+  currentPage: ref(1),
+
+  pageCount: computed(() =>
+      Math.ceil(filter.filteredItems.value.length / pagination.itemsPerPage.value)
+  ),
+
+  pagedItems: computed(() => {
+    const start = (pagination.currentPage.value - 1) * pagination.itemsPerPage.value;
+    return filter.filteredItems.value.slice(start, start + pagination.itemsPerPage.value);
+  })
+};
+const displayItems = computed(() => pagination.pagedItems.value);
+let bodyRef = ref(null)
+
+watch(columnWidths, (val) => {
+  localStorage.setItem('columnWidths', JSON.stringify(val));
+}, { deep: true });
+onMounted(() => {
+  const saved = localStorage.getItem('columnWidths');
+  if (saved) columnWidths.value = JSON.parse(saved);
+  nextTick(()=>{
+    if (bodyRef.value && bodyRef.value.clientHeight){
+      pagination.itemsPerPage.value = Math.ceil((bodyRef.value.clientHeight) / 48);
+    }
+  })
+
+
+});
+
 </script>
 
 <template>
-  <v-card>
+  <v-card  class="d-flex flex-column fill-height">
     <v-toolbar density="compact">
       <v-btn v-if="params.add" :to="params.add" icon="mdi-plus" />
       <v-spacer />
       <v-text-field
-          v-model="search"
+          v-model="filter.search.value"
           append-inner-icon="mdi-magnify"
           density="compact"
           label="ძებნა"
@@ -76,75 +104,88 @@ function startResize(colKey, event) {
           single-line
       />
     </v-toolbar>
-
-    <v-list>
+    <v-list class="d-flex flex-column fill-height pa-0">
       <!-- Header -->
-      <v-list-item elevation="1">
-        <div class="d-flex flex-row">
-          <div
-              class="column-header flex-1-1 ma-2"
-              v-for="col in params.fields"
-              :key="col.key"
-              :style="col.type=='img'?{maxWidth:'50px'}:{ width: (columnWidths[col.key] || 150) + 'px' }"
-          >
-            {{ col.value }}
-            <span class="resizer" v-if="col.type!='img'" @mousedown="startResize(col.key, $event)"></span>
+      <div>
+        <v-list-item elevation="1" >
+          <div class="d-flex flex-row">
+            <div
+                class="column-header flex-1-1 ma-2"
+                v-for="col in params.fields"
+                :key="col.key"
+                :style="col.type == 'img' ? { maxWidth: '50px' } : { width: (columnWidths[col.key] || 150) + 'px' }"
+            >
+              {{ col.value }}
+              <span class="resizer" v-if="col.type != 'img'" @mousedown="startResize(col.key, $event)"></span>
+            </div>
           </div>
-        </div>
-        <template v-slot:append v-if="params.delete">
-          <v-btn icon="mdi-config" size="sm" variant="text"/>
-        </template>
-      </v-list-item>
-
-      <!-- Rows -->
-      <v-list-item
-          elevation="1"
-          v-for="(item, index) in filteredItems"
-          :key="item.id ?? index"
-          :to="params.to ? (params.to + '/' + item.id) : false"
-          link
-      >
-        <div class="d-flex flex-row">
-          <div
-              v-for="col in params.fields"
-              :key="col.key"
-              class="text-left row-cell flex-1-1 ma-2"
-              :style="col.type=='img'?{maxWidth:'50px'}:{ width: (columnWidths[col.key] || 150) + 'px' }"
-          >
-            <template v-if="col.type=='img'">
-              <v-avatar style="position: absolute; margin: -6px;" :image="item[col.key]"></v-avatar>
-            </template>
-            <template v-else> {{ item[col.key] }}</template>
-
+          <template v-slot:append v-if="params.delete">
+            <v-btn icon="mdi-config" size="sm" variant="text" />
+          </template>
+        </v-list-item>
+      </div>
+      <!-- Rows - scrollable -->
+      <div class="flex-grow-1 overflow-y-auto scrollable" ref="bodyRef">
+        <v-list-item
+            v-for="(item, index) in displayItems"
+            :key="item.id ?? index"
+            :to="params.to ? (params.to + '/' + item.id) : false"
+            link
+            elevation="1"
+        >
+          <div class="d-flex flex-row">
+            <div
+                v-for="col in params.fields"
+                :key="col.key"
+                class="text-left row-cell flex-1-1 ma-2"
+                :style="col.type == 'img' ? { maxWidth: '50px' } : { width: (columnWidths[col.key] || 150) + 'px' }"
+            >
+              <template v-if="col.type == 'img'">
+                <v-avatar style="position: absolute; margin: -6px;" :image="item[col.key]" />
+              </template>
+              <template v-else>
+                {{ item[col.key] }}
+              </template>
+            </div>
           </div>
-        </div>
-        <template v-slot:append v-if="params.delete">
-          <v-btn icon="mdi-delete" @click="params.delete(item.id)" size="sm" variant="text"/>
-        </template>
-      </v-list-item>
+          <template v-slot:append v-if="params.delete">
+            <v-btn icon="mdi-delete" @click="params.delete(item.id)" size="sm" variant="text" />
+          </template>
+        </v-list-item>
+      </div>
+      <!-- Footer -->
+      <div>
+
+
+            <v-pagination
+                v-model="pagination.currentPage.value"
+                :length="pagination.pageCount.value"
+                size="small"
+            />
+
+      </div>
+
     </v-list>
-
-    <div v-if="!filteredItems.length" class="empty-message">
+    <div v-if="!displayItems.length" class="empty-message">
       ჩანაწერები არ მოიძებნა
     </div>
   </v-card>
 </template>
 
 <style scoped>
+
 .empty-message {
   text-align: center;
   color: #777;
   padding: 16px;
   font-style: italic;
 }
-
 .column-header {
-  display: flex;
-  align-items: center;
-  position: relative;
-  user-select: none;
-}
-
+   display: flex;
+   align-items: center;
+   position: relative;
+   user-select: none;
+ }
 .resizer {
   width: 5px;
   height: 100%;
@@ -153,9 +194,10 @@ function startResize(colKey, event) {
   background: #2c3e50;
   right: 0;
   top: 0;
-  z-index: 1;
 }
-
+.scrollable{
+  flex: 1 1 260px;
+}
 .row-cell {
   overflow: hidden;
   white-space: nowrap;

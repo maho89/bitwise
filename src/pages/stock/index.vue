@@ -16,7 +16,7 @@ const tableData = computed(() => {
 </script>
 
 <template>
-  <v-card>
+
     <template v-if="loaded">
       <List
           :items="tableData"
@@ -28,5 +28,5 @@ const tableData = computed(() => {
           :key="tableData.length"
       />
     </template>
-  </v-card>
+
 </template>

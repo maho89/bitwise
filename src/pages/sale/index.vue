@@ -46,6 +46,7 @@ function initSale() {
           .then(res => {
             ss.items = res.data?.items?.map(item => ({
               product: productService.displayName(item.productId) ,
+              quantity: item.quantity,
               unitPrice: item.unitPrice?.toFixed(2),
 
               total: item.total?.toFixed(2),
@@ -63,19 +64,19 @@ watch(() => route.params.id, () => {
 })
 onMounted(loadSales);
 const fields = [
-  { key: 'warehouse', value: 'საწყობი' },
+ // { key: 'warehouse', value: 'საწყობი' },
   { key: 'saleDate', value: 'თარიღი' },
   { key: 'client', value: 'კლიენტი' },
   { key: 'totalAmount', value: 'თანხა' }
 ]
 </script>
 <template>
-  <v-card>
+
     <List
         :items="tableData"
         :fields="fields"
         to="/sale"
     />
-  </v-card>
+
   <RouterView  :sale="sale" :key="sale.id"/>
 </template>

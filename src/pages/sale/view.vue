@@ -50,6 +50,7 @@ const itemFields = [
         <v-divider class="my-4" />
 
         <List
+            class="h-100"
             :items="props.sale.items"
             :fields="itemFields"
         />
